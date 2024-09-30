@@ -1,11 +1,10 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { Question, QuestionDocument } from './schema/question.schema';
 import { EnvironmentConfigService, ServiceLevelLogger } from './infrastructure';
 import { User, UserDocument } from './schema/user.schema';
-import { Context, Markup, Telegraf } from 'telegraf';
-import { InjectBot } from 'nestjs-telegraf';
+import { SavedAnswer, SavedAnswersDocument } from './schema/savedAnswer.schema';
 
 type TBotUser = {
   first_name: string;
@@ -21,6 +20,8 @@ export class AppService {
   constructor(
     @InjectModel(Question.name)
     private questionModel: Model<QuestionDocument>,
+    @InjectModel(SavedAnswer.name)
+    private savedAnswerModel: Model<SavedAnswersDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly environmentConfigService: EnvironmentConfigService,
   ) {}
@@ -94,6 +95,29 @@ export class AppService {
     } catch (error) {
       console.error('Error fetching question by answer ID:', error);
       return null;
+    }
+  }
+
+  async checkIfAlreadyAnswered(
+    questionId: mongoose.Schema.Types.ObjectId,
+  ): Promise<boolean> {
+    const data = await this.savedAnswerModel.findOne({
+      questionId: questionId,
+    });
+    return data ? true : false;
+  }
+
+  async saveAnswer(data: Partial<SavedAnswer>): Promise<SavedAnswer> {
+    try {
+      const newAnswer = new this.savedAnswerModel(data);
+      const savedAnswer = await newAnswer.save();
+      return savedAnswer;
+    } catch (error) {
+      this.logger.error('Error while saving an answer');
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

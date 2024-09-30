@@ -1,11 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 
-export type AnsweredQuestionsByUserDocument =
-  HydratedDocument<AnsweredQuestionsByUser>;
+export type SavedAnswersDocument = HydratedDocument<SavedAnswer>;
 
 @Schema()
-export class AnsweredQuestionsByUser {
+export class SavedAnswer {
   @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'User' })
   userId: mongoose.Schema.Types.ObjectId;
 
@@ -16,13 +15,11 @@ export class AnsweredQuestionsByUser {
   })
   questionId: mongoose.Schema.Types.ObjectId;
 
-  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Answer' })
-  selectedAnswerId: mongoose.Schema.Types.ObjectId;
+  @Prop({ required: true })
+  selectedAnswerId: string;
 
   @Prop({ required: true })
   receivedPoints: number;
 }
 
-export const AnsweredQuestionsByUserSchema = SchemaFactory.createForClass(
-  AnsweredQuestionsByUser,
-);
+export const SavedAnswerSchema = SchemaFactory.createForClass(SavedAnswer);

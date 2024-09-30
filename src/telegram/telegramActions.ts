@@ -15,6 +15,7 @@ import { Context, Scenes, session, Telegraf, Telegram } from 'telegraf';
 import { BotService } from './bot.service';
 import Input from 'telegraf';
 import { TStart, welcomeMessage } from './telegramConstant';
+import { AnsweredQuestionsByUser } from 'src/schema/answeredQuestionsByUser.schema';
 
 @Update()
 export class TelegramBotActions {
@@ -39,18 +40,32 @@ export class TelegramBotActions {
   @Action(/.+/)
   async handleAnswer(ctx: any) {
     const selectedAnswerId = ctx.update.callback_query.data;
+
     const question = await this.appService.findQuestionByAnswerId(
       selectedAnswerId,
     );
+
+    const isAnswered = await this.appService.checkIfAlreadyAnswered(
+      question._id,
+    );
+
+    if (isAnswered) {
+      return ctx.reply('You answered this question already');
+    }
     const correctAnswer = question.answers.find(
       (answer: any) => answer.isCorrect === true,
     );
 
-  
     if (String(correctAnswer._id) === selectedAnswerId) {
-      ctx.reply('You earned points');
+      const data: Partial<AnsweredQuestionsByUser> = {
+        questionId: question._id,
+        selectedAnswerId,
+        receivedPoints: question.points,
+      };
+      await this.appService.saveAnswer(data)
+      await ctx.reply('You earned points');
     } else {
-      ctx.reply('Your answer is incorrect');
+      await ctx.reply('Your answer is incorrect');
     }
   }
 }

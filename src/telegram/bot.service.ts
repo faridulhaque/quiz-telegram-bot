@@ -30,9 +30,7 @@ export class BotService {
       },
     );
 
-    console.log(telegramId);
-    console.log(messageText);
-    console.log(buttons);
+    
 
     await this.bot.telegram.sendMessage(telegramId, messageText, buttons);
   }
