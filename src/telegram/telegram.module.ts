@@ -6,33 +6,25 @@ import {
 } from 'src/infrastructure';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { BotService } from './bot.service';
+import { AppService } from 'src/app.service';
 
 @Module({
   imports: [
     TelegrafModule.forRootAsync({
       imports: [EnvironmentConfigModule],
       inject: [EnvironmentConfigService],
-      useFactory: (config: EnvironmentConfigService) => ({
-        token: config.getTelegramApiToken(),
+      useFactory: (configService: EnvironmentConfigService) => ({
+        token: configService.getTelegramApiToken(),
       }),
     }),
   ],
   controllers: [],
   providers: [
-    EnvironmentConfigService,
     BotService,
 
     {
       provide: 'BOT_SERVICE_LEVEL_LOGGER',
       useValue: new ServiceLevelLogger('BOT_SERVICE_LEVEL_LOGGER'),
-    },
-    {
-      provide: 'IMAGE_PROCESSOR_LOGGER',
-      useValue: new ServiceLevelLogger('IMAGE_PROCESSOR_LOGGER'),
-    },
-    {
-      provide: 'BILL_IMAGE_PROCESSOR_LOGGER',
-      useValue: new ServiceLevelLogger('BILL_IMAGE_PROCESSOR_LOGGER'),
     },
   ],
   exports: [BotService],

@@ -5,13 +5,6 @@ export enum TStart {
   n = 'n',
 }
 
-export const welcomeMessage = 'Are you ready to play the game?';
-export const yesNoButtons = Markup.inlineKeyboard(
-  [
-    Markup.button.callback('Yup!', TStart.y),
-    Markup.button.callback('Nope!', TStart.n),
-  ],
-  {
-    columns: 2,
-  },
-);
+export const welcomeMessage =
+  'Thanks for joining! You will get a quiz soon! Please stay tuned';
+

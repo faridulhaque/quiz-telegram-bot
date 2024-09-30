@@ -9,10 +9,9 @@ import {
 } from './infrastructure';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schema/user.schema';
-import { UserService } from './services/user.service';
 import { TelegramBotActions } from './telegram/telegramActions';
 import { Question, QuestionSchema } from './schema/question.schema';
-import { Narration, NarrationSchema } from './schema/narration.schema';
+import { BotService } from './telegram/bot.service';
 
 @Module({
   imports: [
@@ -27,7 +26,6 @@ import { Narration, NarrationSchema } from './schema/narration.schema';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Question.name, schema: QuestionSchema },
-      { name: Narration.name, schema: NarrationSchema },
     ]),
 
     TelegramModule,
@@ -37,14 +35,14 @@ import { Narration, NarrationSchema } from './schema/narration.schema';
   providers: [
     AppService,
     TelegramBotActions,
-    UserService,
+    BotService,
     {
       provide: 'APP_SERVICE_LOGGER',
       useValue: new ServiceLevelLogger('APP_SERVICE_LOGGER'),
     },
     {
-      provide: 'USERS_SERVICE_LOGGER',
-      useValue: new ServiceLevelLogger('USERS_SERVICE_LOGGER'),
+      provide: 'BOT_SERVICE_LEVEL_LOGGER',
+      useValue: new ServiceLevelLogger('BOT_SERVICE_LEVEL_LOGGER'),
     },
   ],
 })

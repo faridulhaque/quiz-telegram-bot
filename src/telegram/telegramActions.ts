@@ -1,5 +1,4 @@
 import { AppService } from './../app.service';
-import { UserService } from './../services/user.service';
 import { Controller } from '@nestjs/common';
 import {
   Action,
@@ -15,38 +14,43 @@ import {
 import { Context, Scenes, session, Telegraf, Telegram } from 'telegraf';
 import { BotService } from './bot.service';
 import Input from 'telegraf';
-import { TStart, welcomeMessage, yesNoButtons } from './telegramConstant';
+import { TStart, welcomeMessage } from './telegramConstant';
 
 @Update()
 export class TelegramBotActions {
   constructor(
     @InjectBot() private readonly bot: Telegraf<Context>,
-    private readonly botService: BotService,
     private readonly appService: AppService,
-    private readonly userService: UserService,
   ) {}
 
   @Start()
   async startCommand(ctx: any) {
     try {
       const user = ctx.update.message.from;
-      const newUser = await this.userService.createUser(user);
+      const newUser = await this.appService.createUser(user);
       if (newUser) {
-        await ctx.reply(welcomeMessage, yesNoButtons);
+        await ctx.reply(welcomeMessage);
       }
     } catch (error) {
       console.log('error occurred', error);
     }
   }
 
-  @Action(TStart.n)
-  async handleNegReply(@Ctx() ctx: Context) {
-    await ctx.reply('Ok! Let me know when you are in the mood!');
-  }
+  @Action(/.+/)
+  async handleAnswer(ctx: any) {
+    const selectedAnswerId = ctx.update.callback_query.data;
+    const question = await this.appService.findQuestionByAnswerId(
+      selectedAnswerId,
+    );
+    const correctAnswer = question.answers.find(
+      (answer: any) => answer.isCorrect === true,
+    );
 
-  @Action(TStart.y)
-  async handlePosReply(@Ctx() ctx: Context) {
-    const narration = await this.appService.getNarration();
-    await ctx.reply(narration.narration);
+  
+    if (String(correctAnswer._id) === selectedAnswerId) {
+      ctx.reply('You earned points');
+    } else {
+      ctx.reply('Your answer is incorrect');
+    }
   }
 }

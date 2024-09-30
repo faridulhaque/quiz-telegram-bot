@@ -1,20 +1,55 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Narration, NarrationDocument } from './schema/narration.schema';
 import { Question, QuestionDocument } from './schema/question.schema';
-import { ServiceLevelLogger } from './infrastructure';
+import { EnvironmentConfigService, ServiceLevelLogger } from './infrastructure';
+import { User, UserDocument } from './schema/user.schema';
+import { Context, Markup, Telegraf } from 'telegraf';
+import { InjectBot } from 'nestjs-telegraf';
+
+type TBotUser = {
+  first_name: string;
+  last_name: string;
+  id: string;
+  username?: string;
+};
 
 @Injectable()
 export class AppService {
   @Inject('APP_SERVICE_LOGGER')
   private logger: ServiceLevelLogger;
   constructor(
-    @InjectModel(Narration.name)
-    private narrationModel: Model<NarrationDocument>,
     @InjectModel(Question.name)
     private questionModel: Model<QuestionDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly environmentConfigService: EnvironmentConfigService,
   ) {}
+
+  async createUser(user: TBotUser): Promise<User> {
+    try {
+      const isUserExisted = await this.userModel.findOne({
+        telegramId: user.id,
+      });
+      if (isUserExisted) {
+        this.logger.log('User already exists');
+        return isUserExisted;
+      } else {
+        this.logger.log('New user is being created');
+
+        const newUser = new this.userModel({
+          telegramId: user.id,
+          firstName: user.first_name,
+          lastName: user.last_name,
+        });
+        const savedUser = await newUser.save();
+        this.logger.log('New user has been created');
+
+        return savedUser;
+      }
+    } catch (error) {
+      this.logger.error(`Failed to fetch or create user ${error}`);
+    }
+  }
 
   async createQuestion(question: Question): Promise<Question> {
     try {
@@ -32,45 +67,33 @@ export class AppService {
     }
   }
 
-  async createNarration(narration: Narration): Promise<Narration> {
+  async getUsersTGIds(): Promise<any> {
     try {
-      this.logger.log('Trying to create a narration');
-      const newNarration = new this.narrationModel(narration);
-      const savedNarration = await newNarration.save();
-      this.logger.log('New narration has been created');
-      return savedNarration;
+      this.logger.log('Trying to get users telegram Ids');
+      const usersWithTGIds = await this.userModel.find().select({
+        _id: 1,
+        telegramId: 1,
+      });
+      return usersWithTGIds;
     } catch (error) {
-      this.logger.error('Error updating narration', error);
-      throw new HttpException(
-        'Narration creation failed',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      this.logger.error('Error getting users telegram Ids', error);
     }
   }
 
-  async getCount(): Promise<number> {
-    return await this.narrationModel.countDocuments().exec();
-  }
+  async findQuestionByAnswerId(
+    selectedAnswerId: string,
+  ): Promise<Question | null> {
+    try {
+      const question = await this.questionModel
+        .findOne({
+          'answers._id': selectedAnswerId,
+        })
+        .exec();
 
-  async getNarration(): Promise<Narration> {
-    const count = await this.getCount();
-    if (count === 0) {
-      this.logger.warn('No narrations available');
-      throw new Error('No narrations available.');
+      return question;
+    } catch (error) {
+      console.error('Error fetching question by answer ID:', error);
+      return null;
     }
-
-    const randomIndex = Math.floor(Math.random() * count);
-
-    const narration = await this.narrationModel
-      .findOne()
-      .skip(randomIndex)
-      .populate('questions')
-      .exec();
-
-    if (!narration) {
-      throw new Error('Narration not found.');
-    }
-
-    return narration;
   }
 }
