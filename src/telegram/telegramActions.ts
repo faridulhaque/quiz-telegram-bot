@@ -15,7 +15,7 @@ import { Context, Scenes, session, Telegraf, Telegram } from 'telegraf';
 import { BotService } from './bot.service';
 import Input from 'telegraf';
 import { TStart, welcomeMessage } from './telegramConstant';
-import { AnsweredQuestionsByUser } from 'src/schema/answeredQuestionsByUser.schema';
+import { SavedAnswer } from 'src/schema/savedAnswer.schema';
 
 @Update()
 export class TelegramBotActions {
@@ -39,6 +39,8 @@ export class TelegramBotActions {
 
   @Action(/.+/)
   async handleAnswer(ctx: any) {
+    const client = ctx.update.callback_query.from;
+
     const selectedAnswerId = ctx.update.callback_query.data;
 
     const question = await this.appService.findQuestionByAnswerId(
@@ -50,22 +52,36 @@ export class TelegramBotActions {
     );
 
     if (isAnswered) {
-      return ctx.reply('You answered this question already');
-    }
-    const correctAnswer = question.answers.find(
-      (answer: any) => answer.isCorrect === true,
-    );
+      ctx.reply('You answered this question already');
+    } else {
+      const user = await this.appService.getUserByTGId(client.id);
+      const points = await this.appService.getPoints(user._id);
 
-    if (String(correctAnswer._id) === selectedAnswerId) {
-      const data: Partial<AnsweredQuestionsByUser> = {
+      const correctAnswer = question.answers.find(
+        (answer: any) => answer.isCorrect === true,
+      );
+
+      const data: Partial<SavedAnswer> = {
         questionId: question._id,
         selectedAnswerId,
-        receivedPoints: question.points,
+        userId: user._id,
       };
-      await this.appService.saveAnswer(data)
-      await ctx.reply('You earned points');
-    } else {
-      await ctx.reply('Your answer is incorrect');
+
+      if (String(correctAnswer._id) === selectedAnswerId) {
+        await this.appService.saveAnswer({
+          ...data,
+          receivedPoints: question.points,
+        });
+        const points = await this.appService.getPoints(user._id);
+        console.log(points);
+        await ctx.reply(`You earned ${question.points} points`);
+      } else {
+        await this.appService.saveAnswer({
+          ...data,
+          receivedPoints: question.points,
+        });
+        await ctx.reply('Your answer is incorrect');
+      }
     }
   }
 }

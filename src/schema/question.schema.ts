@@ -5,10 +5,10 @@ export type QuestionDocument = HydratedDocument<Question>;
 
 @Schema()
 export class Question {
-  @Prop({ type: mongoose.Schema.Types.ObjectId })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, auto: true })
   _id: mongoose.Schema.Types.ObjectId;
 
-  @Prop({ minlength: 100, required: true, unique: true })
+  @Prop({ minlength: 50, required: true, unique: true })
   narration: string;
 
   @Prop({ required: true })
@@ -16,6 +16,7 @@ export class Question {
 
   @Prop({
     required: true,
+    length: 4,
     type: [
       {
         _id: { type: mongoose.Schema.Types.ObjectId, auto: true },

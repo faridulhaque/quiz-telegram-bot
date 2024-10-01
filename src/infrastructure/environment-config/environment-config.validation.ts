@@ -25,36 +25,9 @@ class EnvironmentVariables {
   DB_CONNECTION_URL:string
 
   @IsString()
-  API_KEY:string
+  ADMIN_SECRET:string
 
-  @IsString()
-  CLIENT_ID:string
-
-  @IsString()
-  REDIS_HOST;
-
-  @IsString()
-  AWS_S3_REGION;
-
-  @IsString()
-  AWS_S3_ACCESSKEYID;
-
-  @IsString()
-  AWS_S3_SECRETACCESSKEY;
-
-  @IsString()
-  AWS_S3_BUCKET;
-
-  @IsString()
-  AWS_S3_ROOT_FOLDER;
-
-  @IsNumber()
-  @Transform(({ value }) => parseInt(value, 10), { toClassOnly: true })
-  REDIS_DB;
-
-  @IsNumber()
-  @Transform(({ value }) => parseInt(value, 10), { toClassOnly: true })
-  REDIS_PORT;
+ 
 
 }
 

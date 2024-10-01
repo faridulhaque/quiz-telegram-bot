@@ -12,4 +12,7 @@ export class EnvironmentConfigService {
   getDbConnectionUrl() {
     return this.configService.get<string>('DB_CONNECTION_URL');
   }
+  getAdminSecret() {
+    return this.configService.get<string>('ADMIN_SECRET');
+  }
 }

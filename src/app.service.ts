@@ -52,6 +52,17 @@ export class AppService {
     }
   }
 
+  async getUserByTGId(tgId: string): Promise<User> {
+    try {
+      const user = await this.userModel.findOne().select({
+        telegramId: tgId,
+      });
+      return user;
+    } catch (error) {
+      this.logger.error('Error while fetching user');
+    }
+  }
+
   async createQuestion(question: Question): Promise<Question> {
     try {
       this.logger.log('Trying to create a question');
@@ -93,7 +104,7 @@ export class AppService {
 
       return question;
     } catch (error) {
-      console.error('Error fetching question by answer ID:', error);
+      this.logger.error('Error fetching question by answer ID:', error);
       return null;
     }
   }
@@ -119,5 +130,14 @@ export class AppService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async getPoints(id: mongoose.Schema.Types.ObjectId): Promise<number> {
+    const result = await this.savedAnswerModel.aggregate([
+      { $match: { userId: id } },
+      { $group: { _id: null, totalPoints: { $sum: '$points' } } },
+    ]);
+
+    return result.length > 0 ? result[0].totalPoints : 0;
   }
 }

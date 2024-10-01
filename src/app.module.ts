@@ -12,6 +12,7 @@ import { User, UserSchema } from './schema/user.schema';
 import { TelegramBotActions } from './telegram/telegramActions';
 import { Question, QuestionSchema } from './schema/question.schema';
 import { BotService } from './telegram/bot.service';
+import { SavedAnswer, SavedAnswerSchema } from './schema/savedAnswer.schema';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { BotService } from './telegram/bot.service';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Question.name, schema: QuestionSchema },
+      { name: SavedAnswer.name, schema: SavedAnswerSchema },
     ]),
 
     TelegramModule,

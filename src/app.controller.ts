@@ -6,10 +6,12 @@ import {
   HttpException,
   HttpStatus,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Question } from './schema/question.schema';
 import { BotService } from './telegram/bot.service';
+import { AdminAuthGuard } from './guards/adminAuthGuard';
 
 @Controller('')
 export class AppController {
@@ -24,6 +26,7 @@ export class AppController {
   }
 
   @Post('/create-question')
+  @UseGuards(AdminAuthGuard)
   async createQuestion(@Body() body: Question): Promise<Question> {
     const questionData = await this.appService.createQuestion(body);
     if (questionData) {
